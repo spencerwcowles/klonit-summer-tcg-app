@@ -8,8 +8,9 @@ Fixes # (issue)
 
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
+- [ ] Docs (documentation in readme or comments etc)
 
 # Checklist:
 
-- [ ] I ran `npm run dev`
+- [ ] I ran `npm run check`
 - [ ] I have made corresponding changes to the documentation

@@ -1,6 +1,9 @@
 # Klonit Summer TCG App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 🛠️ Project Stack
+
+This app is built with [React Native](https://reactnative.dev/) and [Expo](https://expo.dev/) for rapid cross-platform mobile development. We use [Expo Router](https://expo.github.io/router/docs) for navigation, and TypeScript for type safety. The UI leverages React Native components, with custom theming and iconography. Code quality is enforced using [Biome](https://biomejs.dev/) for linting and formatting. The project is managed with npm and follows a feature-branch workflow for collaborative development.
+
 
 ---
 

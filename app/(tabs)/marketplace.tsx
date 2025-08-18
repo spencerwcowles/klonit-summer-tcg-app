@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AIAssistantCard } from '../../components/AIAssistantCard';
 import { type AIAssistant, CATEGORIES, type Category, MOCK_ASSISTANTS } from '../../types';
@@ -19,20 +19,27 @@ export default function MarketplaceScreen() {
     return matchesSearch && matchesCategory;
   });
 
+  const handleAssistantPress = useCallback((_assistant: AIAssistant) => {
+    // TODO: Navigate to assistant detail screen
+    // For now, just show the assistant name
+  }, []);
+
   const renderAssistant = ({ item }: { item: AIAssistant }) => (
-    <AIAssistantCard assistant={item} onPress={() => console.log('Pressed assistant:', item.name)} />
+    <AIAssistantCard assistant={item} onPress={() => handleAssistantPress(item)} />
   );
+
+  const handleCategoryPress = useCallback((categoryId: string) => {
+    setSelectedCategory(categoryId);
+    if (categoryId !== 'all') {
+      setShowCategories(false);
+    }
+  }, []);
 
   const renderCategory = (category: Category) => (
     <TouchableOpacity
       key={category.id}
       style={[styles.categoryItem, selectedCategory === category.id && styles.selectedCategoryItem]}
-      onPress={() => {
-        setSelectedCategory(category.id);
-        if (category.id !== 'all') {
-          setShowCategories(false);
-        }
-      }}
+      onPress={() => handleCategoryPress(category.id)}
     >
       <Text style={[styles.categoryText, selectedCategory === category.id && styles.selectedCategoryText]}>{category.name}</Text>
       {category.count && <Text style={styles.categoryCount}>{category.count}</Text>}
@@ -76,6 +83,13 @@ export default function MarketplaceScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="search-outline" size={48} color="#9CA3AF" />
+            <Text style={styles.emptyTitle}>No assistants found</Text>
+            <Text style={styles.emptySubtitle}>Try adjusting your search or category filter</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   );
@@ -170,5 +184,25 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingVertical: 8,
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 64,
+    paddingHorizontal: 32,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

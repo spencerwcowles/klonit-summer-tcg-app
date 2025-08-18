@@ -21,10 +21,12 @@ export const AIAssistantCard: React.FC<AIAssistantCardProps> = ({ assistant, onP
         <View style={styles.contentContainer}>
           <View style={styles.headerContainer}>
             <Text style={styles.companyName}>{assistant.name}</Text>
-            <View style={styles.brandContainer}>
-              <Text style={styles.brandText}>MIDWEST SLEEP</Text>
-              <Text style={styles.brandText}>& WELLNESS</Text>
-            </View>
+            {(assistant.brandName || assistant.brandSubtitle) && (
+              <View style={styles.brandContainer}>
+                {assistant.brandName && <Text style={styles.brandText}>{assistant.brandName}</Text>}
+                {assistant.brandSubtitle && <Text style={styles.brandText}>{assistant.brandSubtitle}</Text>}
+              </View>
+            )}
           </View>
 
           <Text style={styles.description} numberOfLines={3}>

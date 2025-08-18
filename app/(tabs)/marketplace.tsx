@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AIAssistantCard } from '../../components/AIAssistantCard';
 import { type AIAssistant, CATEGORIES, type Category, MOCK_ASSISTANTS } from '../../types';

@@ -17,7 +17,8 @@
       "!**/debug-files",
       "!**/.vscode",
       "!**/generated",
-      "!**/.next"
+      "!**/.next",
+      "!**/.expo"
     ],
     "ignoreUnknown": false
   },

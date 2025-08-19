@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import type React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import type { AIAssistant } from '../types';
+import { colors } from '../../theme/colors';
+import type { AIAssistant } from '../../types';
 
 interface AIAssistantCardProps {
   assistant: AIAssistant;
@@ -59,7 +60,7 @@ export const AIAssistantCard: React.FC<AIAssistantCardProps> = ({ assistant, onP
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderRadius: 12,
     marginHorizontal: 16,
     marginVertical: 6,
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.grayLight,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   companyName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.black,
     marginBottom: 2,
   },
   brandContainer: {
@@ -115,12 +116,12 @@ const styles = StyleSheet.create({
   brandText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#6B7280',
+    color: colors.black,
     letterSpacing: 1,
   },
   description: {
     fontSize: 13,
-    color: '#6B7280',
+    color: colors.black,
     lineHeight: 18,
     marginBottom: 12,
   },
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
   },
   providerText: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.black,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -156,7 +157,7 @@ const styles = StyleSheet.create({
   },
   ratingText: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.black,
     fontWeight: '500',
   },
   usersContainer: {
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
   },
   usersText: {
     fontSize: 11,
-    color: '#6B7280',
+    color: colors.black,
     fontWeight: '500',
   },
 });

@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
 import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { AIAssistantCard } from '../../components/AIAssistantCard';
-import { type AIAssistant, CATEGORIES, type Category, MOCK_ASSISTANTS } from '../../types';
+import { AIAssistantCard } from '../../components/Marketplace/AIAssistantCard';
+import { MOCK_ASSISTANTS } from '../../data/mockAssistants';
+import { colors } from '../../theme/colors';
+import { type AIAssistant, CATEGORIES, type Category } from '../../types';
 
 export default function MarketplaceScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,7 +23,6 @@ export default function MarketplaceScreen() {
 
   const handleAssistantPress = useCallback((_assistant: AIAssistant) => {
     // TODO: Navigate to assistant detail screen
-    // For now, just show the assistant name
   }, []);
 
   const renderAssistant = ({ item }: { item: AIAssistant }) => (
@@ -54,11 +55,11 @@ export default function MarketplaceScreen() {
 
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color="#9CA3AF" style={styles.searchIcon} />
+          <Ionicons name="search-outline" size={20} color={colors.black} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search for AI assistants ..."
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.black}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -66,9 +67,9 @@ export default function MarketplaceScreen() {
       </View>
 
       <TouchableOpacity style={styles.categoriesToggle} onPress={() => setShowCategories(!showCategories)}>
-        <Ionicons name="filter" size={20} color="#8B5CF6" style={styles.filterIcon} />
+        <Ionicons name="filter" size={20} color={colors.purple} style={styles.filterIcon} />
         <Text style={styles.categoriesTitle}>Categories</Text>
-        <Ionicons name={showCategories ? 'chevron-up' : 'chevron-down'} size={20} color="#8B5CF6" />
+        <Ionicons name={showCategories ? 'chevron-up' : 'chevron-down'} size={20} color={colors.purple} />
       </TouchableOpacity>
 
       {showCategories && (
@@ -85,7 +86,7 @@ export default function MarketplaceScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={48} color="#9CA3AF" />
+            <Ionicons name="search-outline" size={48} color={colors.black} />
             <Text style={styles.emptyTitle}>No assistants found</Text>
             <Text style={styles.emptySubtitle}>Try adjusting your search or category filter</Text>
           </View>
@@ -98,29 +99,29 @@ export default function MarketplaceScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: colors.grayLight,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: colors.purple,
   },
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: colors.grayLight,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -131,16 +132,16 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#111827',
+    color: colors.black,
   },
   categoriesToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: colors.grayLight,
   },
   filterIcon: {
     marginRight: 8,
@@ -149,13 +150,13 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.black,
   },
   categoriesContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.white,
     maxHeight: 300,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: colors.grayLight,
   },
   categoryItem: {
     flexDirection: 'row',
@@ -164,22 +165,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F9FAFB',
+    borderBottomColor: colors.grayLight,
   },
   selectedCategoryItem: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: colors.purple,
   },
   categoryText: {
     fontSize: 16,
-    color: '#111827',
+    color: colors.black,
   },
   selectedCategoryText: {
-    color: '#FFFFFF',
+    color: colors.white,
     fontWeight: '600',
   },
   categoryCount: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.black,
     fontWeight: '500',
   },
   listContainer: {
@@ -195,13 +196,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111827',
+    color: colors.black,
     marginTop: 16,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#6B7280',
+    color: colors.black,
     textAlign: 'center',
     lineHeight: 20,
   },

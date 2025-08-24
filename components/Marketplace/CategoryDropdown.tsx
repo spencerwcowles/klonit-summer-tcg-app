@@ -1,8 +1,8 @@
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import type { Category } from '../../types';
+import type React from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { colors } from '../../theme/colors';
+import type { Category } from '../../types';
 
 interface CategoryDropdownProps {
   categories: Category[];
@@ -12,23 +12,13 @@ interface CategoryDropdownProps {
   onSelect: (id: string) => void;
 }
 
-export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
-  categories,
-  selectedCategory,
-  showCategories,
-  onToggle,
-  onSelect,
-}) => {
+export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({ categories, selectedCategory, showCategories, onToggle, onSelect }) => {
   return (
     <>
       <TouchableOpacity style={styles.categoriesToggle} onPress={onToggle}>
         <Ionicons name="filter" size={20} color={colors.purple} style={styles.filterIcon} />
         <Text style={styles.categoriesTitle}>Categories</Text>
-        <Ionicons
-          name={showCategories ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.purple}
-        />
+        <Ionicons name={showCategories ? 'chevron-up' : 'chevron-down'} size={20} color={colors.purple} />
       </TouchableOpacity>
 
       {showCategories && (
@@ -41,12 +31,8 @@ export const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
                 style={[styles.categoryItem, isSelected && styles.selectedCategoryItem]}
                 onPress={() => onSelect(category.id)}
               >
-                <Text style={[styles.categoryText, isSelected && styles.selectedCategoryText]}>
-                  {category.name}
-                </Text>
-                {category.count !== undefined && (
-                  <Text style={styles.categoryCount}>{category.count}</Text>
-                )}
+                <Text style={[styles.categoryText, isSelected && styles.selectedCategoryText]}>{category.name}</Text>
+                {category.count !== undefined && <Text style={styles.categoryCount}>{category.count}</Text>}
               </TouchableOpacity>
             );
           })}

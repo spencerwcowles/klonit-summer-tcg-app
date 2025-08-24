@@ -1,19 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback, useState } from 'react';
-import {
-  FlatList,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AIAssistantCard } from '../../components/Marketplace/AIAssistantCard';
-import { type AIAssistant, CATEGORIES, type Category } from '../../types';
 import { MOCK_ASSISTANTS } from '../../data/mockAssistants';
 import { colors } from '../../theme/colors';
+import { type AIAssistant, CATEGORIES, type Category } from '../../types';
 
 export default function MarketplaceScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,9 +42,7 @@ export default function MarketplaceScreen() {
       style={[styles.categoryItem, selectedCategory === category.id && styles.selectedCategoryItem]}
       onPress={() => handleCategoryPress(category.id)}
     >
-      <Text style={[styles.categoryText, selectedCategory === category.id && styles.selectedCategoryText]}>
-        {category.name}
-      </Text>
+      <Text style={[styles.categoryText, selectedCategory === category.id && styles.selectedCategoryText]}>{category.name}</Text>
       {category.count && <Text style={styles.categoryCount}>{category.count}</Text>}
     </TouchableOpacity>
   );
@@ -80,11 +69,7 @@ export default function MarketplaceScreen() {
       <TouchableOpacity style={styles.categoriesToggle} onPress={() => setShowCategories(!showCategories)}>
         <Ionicons name="filter" size={20} color={colors.purple} style={styles.filterIcon} />
         <Text style={styles.categoriesTitle}>Categories</Text>
-        <Ionicons
-          name={showCategories ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={colors.purple}
-        />
+        <Ionicons name={showCategories ? 'chevron-up' : 'chevron-down'} size={20} color={colors.purple} />
       </TouchableOpacity>
 
       {showCategories && (

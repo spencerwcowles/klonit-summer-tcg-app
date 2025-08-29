@@ -1,28 +1,51 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useState } from 'react';
-import { FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import { ActivityIndicator, FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { AIAssistantCard } from '../../components/Marketplace/AIAssistantCard';
-import { MOCK_ASSISTANTS } from '../../data/mockAssistants';
+import { useCategories } from '../../hooks/queries/useCategories';
+import { useListings } from '../../hooks/queries/useListings';
+import { useDebounce } from '../../hooks/useDebounce';
 import { colors } from '../../theme/colors';
-import { type AIAssistant, CATEGORIES, type Category } from '../../types';
+import type { AIAssistant, Category } from '../../types';
+import { mapAPIListingsToAIAssistantsEnhanced } from '../../utils/mappers';
 
 export default function MarketplaceScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showCategories, setShowCategories] = useState(false);
 
-  const filteredAssistants = MOCK_ASSISTANTS.filter((assistant) => {
-    const matchesSearch =
-      assistant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      assistant.description.toLowerCase().includes(searchQuery.toLowerCase());
+  // Debounce search query to avoid excessive API calls
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-    const matchesCategory = selectedCategory === 'all' || assistant.category === selectedCategory;
-
-    return matchesSearch && matchesCategory;
+  // Fetch data with React Query
+  const {
+    listings: apiListings,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    loadMore,
+    isLoadingMore,
+    refetch,
+  } = useListings({
+    category: selectedCategory,
+    search: debouncedSearchQuery, // Use debounced search
+    perPage: 9,
   });
 
-  const handleAssistantPress = useCallback((_assistant: AIAssistant) => {
-    // TODO: Navigate to assistant detail screen
+  const { categories, isLoading: categoriesLoading } = useCategories();
+
+  // Transform API data to UI format
+  const assistants = useMemo(() => {
+    return mapAPIListingsToAIAssistantsEnhanced(apiListings);
+  }, [apiListings]);
+
+  const handleAssistantPress = useCallback((assistant: AIAssistant) => {
+    router.push({
+      pathname: '/listing/[id]',
+      params: { id: assistant.id },
+    });
   }, []);
 
   const renderAssistant = ({ item }: { item: AIAssistant }) => (
@@ -46,6 +69,12 @@ export default function MarketplaceScreen() {
       {category.count && <Text style={styles.categoryCount}>{category.count}</Text>}
     </TouchableOpacity>
   );
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isLoadingMore) {
+      loadMore();
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,24 +103,57 @@ export default function MarketplaceScreen() {
 
       {showCategories && (
         <ScrollView style={styles.categoriesContainer} showsVerticalScrollIndicator={false}>
-          {CATEGORIES.map(renderCategory)}
+          {categoriesLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="small" color={colors.purple} />
+              <Text style={styles.loadingText}>Loading categories...</Text>
+            </View>
+          ) : (
+            categories.map(renderCategory)
+          )}
         </ScrollView>
       )}
 
-      <FlatList
-        data={filteredAssistants}
-        renderItem={renderAssistant}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="search-outline" size={48} color={colors.black} />
-            <Text style={styles.emptyTitle}>No assistants found</Text>
-            <Text style={styles.emptySubtitle}>Try adjusting your search or category filter</Text>
-          </View>
-        }
-      />
+      {isLoading && assistants.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.purple} />
+          <Text style={styles.loadingText}>Loading assistants...</Text>
+        </View>
+      ) : isError ? (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.purple} />
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorSubtitle}>Unable to load assistants. Please try again.</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={assistants}
+          renderItem={renderAssistant}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.1}
+          ListFooterComponent={
+            isLoadingMore ? (
+              <View style={styles.loadMoreContainer}>
+                <ActivityIndicator size="small" color={colors.purple} />
+                <Text style={styles.loadMoreText}>Loading more...</Text>
+              </View>
+            ) : null
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Ionicons name="search-outline" size={48} color={colors.black} />
+              <Text style={styles.emptyTitle}>No assistants found</Text>
+              <Text style={styles.emptySubtitle}>Try adjusting your search or category filter</Text>
+            </View>
+          }
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -205,5 +267,61 @@ const styles = StyleSheet.create({
     color: colors.black,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 64,
+    paddingHorizontal: 32,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: colors.black,
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 64,
+    paddingHorizontal: 32,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.black,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  errorSubtitle: {
+    fontSize: 14,
+    color: colors.black,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: colors.purple,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  loadMoreContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  loadMoreText: {
+    fontSize: 14,
+    color: colors.black,
+    marginLeft: 8,
   },
 });

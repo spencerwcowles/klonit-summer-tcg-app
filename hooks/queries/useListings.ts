@@ -111,10 +111,12 @@ export const useListingDetail = (listingId: number | null, enabled = true) => {
       console.log('[useListingDetail] Response ←', {
         success: (response as any)?.success,
         hasData: Boolean(response?.data),
-        dataSample: response?.data ? {
-          id: (response.data as any)?.id,
-          title: (response.data as any)?.title,
-        } : null,
+        dataSample: response?.data
+          ? {
+              id: (response.data as any)?.id,
+              title: (response.data as any)?.title,
+            }
+          : null,
       });
       return response.data; // Return just the listing data
     },

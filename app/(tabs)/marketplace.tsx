@@ -23,7 +23,6 @@ export default function MarketplaceScreen() {
     listings: apiListings,
     isLoading,
     isError,
-    error,
     hasNextPage,
     loadMore,
     isLoadingMore,

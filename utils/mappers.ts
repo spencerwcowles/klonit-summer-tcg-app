@@ -13,17 +13,13 @@ const stripHtmlTags = (html: string): string => {
 export const mapAPIListingToAIAssistant = (apiListing: APIListingItem): AIAssistant => {
   // Safely handle potentially undefined title
   const title = apiListing.title || 'Untitled';
-  
+
   // Generate brand name from title (first two words)
   const words = title.split(' ');
-  const brandName = words.length >= 2 
-    ? `${words[0].toUpperCase()} ${words[1].toUpperCase()}`
-    : title.toUpperCase();
-  
+  const brandName = words.length >= 2 ? `${words[0].toUpperCase()} ${words[1].toUpperCase()}` : title.toUpperCase();
+
   // Generate brand subtitle from remaining words
-  const brandSubtitle = words.length > 2 
-    ? words.slice(2).join(' ').toUpperCase()
-    : '';
+  const brandSubtitle = words.length > 2 ? words.slice(2).join(' ').toUpperCase() : '';
 
   return {
     id: apiListing.id?.toString() || '0',

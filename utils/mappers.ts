@@ -3,20 +3,39 @@ import type { APIListingItem } from '../types/api';
 
 /**
  * Maps API listing data to UI AIAssistant format
- * This keeps API types separate from UI types as recommended
+ * Clean, single function that handles the actual API structure
  */
+// Helper function to strip HTML tags from text
+const stripHtmlTags = (html: string): string => {
+  return html.replace(/<[^>]*>/g, '').trim();
+};
+
 export const mapAPIListingToAIAssistant = (apiListing: APIListingItem): AIAssistant => {
+  // Safely handle potentially undefined title
+  const title = apiListing.title || 'Untitled';
+  
+  // Generate brand name from title (first two words)
+  const words = title.split(' ');
+  const brandName = words.length >= 2 
+    ? `${words[0].toUpperCase()} ${words[1].toUpperCase()}`
+    : title.toUpperCase();
+  
+  // Generate brand subtitle from remaining words
+  const brandSubtitle = words.length > 2 
+    ? words.slice(2).join(' ').toUpperCase()
+    : '';
+
   return {
-    id: apiListing.id.toString(), // Convert number to string for UI
-    name: apiListing.title,
-    description: apiListing.description,
-    rating: apiListing.rating || 4.0, // Default rating if not provided
-    totalUsers: apiListing.total_users || 0,
-    category: apiListing.category,
-    provider: apiListing.provider || apiListing.author_name || 'Unknown Provider',
-    logoUrl: apiListing.logo_url,
-    brandName: apiListing.brand_name || apiListing.title.toUpperCase(),
-    brandSubtitle: apiListing.brand_subtitle,
+    id: apiListing.id?.toString() || '0',
+    name: title,
+    description: stripHtmlTags(apiListing.short_description || ''),
+    rating: apiListing.rating,
+    totalUsers: apiListing.subscriberCount,
+    category: apiListing.category_key,
+    provider: apiListing.authorName,
+    logoUrl: apiListing.thumbnail_url || undefined,
+    brandName,
+    brandSubtitle,
   };
 };
 
@@ -25,47 +44,4 @@ export const mapAPIListingToAIAssistant = (apiListing: APIListingItem): AIAssist
  */
 export const mapAPIListingsToAIAssistants = (apiListings: APIListingItem[]): AIAssistant[] => {
   return apiListings.map(mapAPIListingToAIAssistant);
-};
-
-/**
- * Generates a brand name from a title if not provided
- */
-const generateBrandName = (title: string): string => {
-  // Take first two words and make them uppercase
-  const words = title.split(' ');
-  if (words.length >= 2) {
-    return `${words[0].toUpperCase()} ${words[1].toUpperCase()}`;
-  }
-  return title.toUpperCase();
-};
-
-/**
- * Generates a brand subtitle from remaining words if not provided
- */
-const generateBrandSubtitle = (title: string): string => {
-  const words = title.split(' ');
-  if (words.length > 2) {
-    return words.slice(2).join(' ').toUpperCase();
-  }
-  return '';
-};
-
-/**
- * Enhanced mapper that generates brand names/subtitles if missing
- */
-export const mapAPIListingToAIAssistantEnhanced = (apiListing: APIListingItem): AIAssistant => {
-  const basicMapping = mapAPIListingToAIAssistant(apiListing);
-
-  return {
-    ...basicMapping,
-    brandName: apiListing.brand_name || generateBrandName(apiListing.title),
-    brandSubtitle: apiListing.brand_subtitle || generateBrandSubtitle(apiListing.title),
-  };
-};
-
-/**
- * Maps array of API listings with enhanced brand name generation
- */
-export const mapAPIListingsToAIAssistantsEnhanced = (apiListings: APIListingItem[]): AIAssistant[] => {
-  return apiListings.map(mapAPIListingToAIAssistantEnhanced);
 };

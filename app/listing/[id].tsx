@@ -3,15 +3,18 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useListingDetail } from '../../hooks/queries/useListings';
 import { colors } from '../../theme/colors';
-import { mapAPIListingToAIAssistantEnhanced } from '../../utils/mappers';
+import { mapAPIListingToAIAssistant } from '../../utils/mappers';
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const listingId = id ? Number.parseInt(id, 10) : null;
 
+  console.log('[ListingDetailScreen] Route params', { id, listingId });
   const { data: apiListing, isLoading, isError, refetch } = useListingDetail(listingId);
 
-  const assistant = apiListing ? mapAPIListingToAIAssistantEnhanced(apiListing) : null;
+  console.log('[ListingDetailScreen] apiListing', apiListing);
+
+  const assistant = apiListing ? mapAPIListingToAIAssistant(apiListing) : null;
 
   const handleBack = () => {
     router.back();
@@ -84,12 +87,12 @@ export default function ListingDetailScreen() {
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
               <Ionicons name="star" size={16} color={colors.purple} />
-              <Text style={styles.statText}>{assistant.rating.toFixed(1)}</Text>
+              <Text style={styles.statText}>{assistant.rating != null ? assistant.rating.toFixed(1) : '—'}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Ionicons name="people" size={16} color={colors.purple} />
-              <Text style={styles.statText}>{assistant.totalUsers.toLocaleString()} users</Text>
+              <Text style={styles.statText}>{assistant.totalUsers != null ? assistant.totalUsers.toLocaleString() : '0'} users</Text>
             </View>
           </View>
         </View>

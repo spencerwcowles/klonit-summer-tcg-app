@@ -4,19 +4,18 @@
 export interface APIListingItem {
   id: number;
   title: string;
-  description: string;
-  author_name?: string;
-  category: string;
-  created_at: string;
-  updated_at: string;
+  short_description: string;
+  long_description: string;
+  authorName: string;
+  authorImage: string;
+  category_key: string;
+  chatbot_id: number;
+  user_id: number;
   is_published: boolean;
-  // Add other fields based on actual API response
-  rating?: number;
-  total_users?: number;
-  provider?: string;
-  logo_url?: string;
-  brand_name?: string;
-  brand_subtitle?: string;
+  rating: number;
+  subscriberCount: number;
+  thumbnail_url: string | null;
+  updated_at: string;
 }
 
 export interface APIListingsResponse {
@@ -25,10 +24,8 @@ export interface APIListingsResponse {
   pagination: {
     page: number;
     per_page: number;
-    total: number;
+    total_items: number;
     total_pages: number;
-    has_next: boolean;
-    has_prev: boolean;
   };
   message?: string;
 }

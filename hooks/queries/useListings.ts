@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { createAbortController, isAbortError, marketplaceApi } from '../../services/marketplaceApi';
+import { isAbortError, marketplaceApi } from '../../services/marketplaceApi';
 import type { APIListingItem } from '../../types/api';
 
 interface UseListingsParams {
@@ -26,13 +26,13 @@ export const useListings = ({ category = 'all', search = '', perPage = 9, enable
       return response;
     },
     getNextPageParam: (lastPage) => {
-      if (lastPage.pagination.has_next) {
+      if (lastPage.pagination.page < lastPage.pagination.total_pages) {
         return lastPage.pagination.page + 1;
       }
       return undefined;
     },
     getPreviousPageParam: (firstPage) => {
-      if (firstPage.pagination.has_prev) {
+      if (firstPage.pagination.page > 1) {
         return firstPage.pagination.page - 1;
       }
       return undefined;
@@ -106,7 +106,16 @@ export const useListingDetail = (listingId: number | null, enabled = true) => {
     queryFn: async ({ signal }) => {
       if (!listingId) throw new Error('Listing ID is required');
 
+      console.log('[useListingDetail] Request →', { listingId });
       const response = await marketplaceApi.getListingDetails(listingId, signal);
+      console.log('[useListingDetail] Response ←', {
+        success: (response as any)?.success,
+        hasData: Boolean(response?.data),
+        dataSample: response?.data ? {
+          id: (response.data as any)?.id,
+          title: (response.data as any)?.title,
+        } : null,
+      });
       return response.data; // Return just the listing data
     },
     enabled: enabled && listingId !== null,
@@ -115,6 +124,12 @@ export const useListingDetail = (listingId: number | null, enabled = true) => {
     retry: (failureCount, error) => {
       if (isAbortError(error)) return false;
       return failureCount < 2;
+    },
+    onError: (err) => {
+      console.log('[useListingDetail] Error ✖', err);
+    },
+    onSuccess: (data) => {
+      console.log('[useListingDetail] onSuccess ✓', { id: (data as any)?.id, title: (data as any)?.title });
     },
   });
 };

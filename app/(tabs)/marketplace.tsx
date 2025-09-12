@@ -8,7 +8,7 @@ import { useListings } from '../../hooks/queries/useListings';
 import { useDebounce } from '../../hooks/useDebounce';
 import { colors } from '../../theme/colors';
 import type { AIAssistant, Category } from '../../types';
-import { mapAPIListingsToAIAssistantsEnhanced } from '../../utils/mappers';
+import { mapAPIListingsToAIAssistants } from '../../utils/mappers';
 
 export default function MarketplaceScreen() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,7 +23,6 @@ export default function MarketplaceScreen() {
     listings: apiListings,
     isLoading,
     isError,
-    error,
     hasNextPage,
     loadMore,
     isLoadingMore,
@@ -38,7 +37,7 @@ export default function MarketplaceScreen() {
 
   // Transform API data to UI format
   const assistants = useMemo(() => {
-    return mapAPIListingsToAIAssistantsEnhanced(apiListings);
+    return mapAPIListingsToAIAssistants(apiListings);
   }, [apiListings]);
 
   const handleAssistantPress = useCallback((assistant: AIAssistant) => {

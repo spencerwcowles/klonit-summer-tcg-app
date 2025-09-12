@@ -2,11 +2,14 @@ export interface AIAssistant {
   id: string;
   name: string;
   description: string;
+  longDescription?: string;
   rating: number;
   totalUsers: number;
   category: string;
   provider: string;
   logoUrl?: string;
+  providerImage?: string;
+  lastUpdated?: string;
   brandName?: string;
   brandSubtitle?: string;
 }

@@ -1,9 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useListingDetail } from '../../hooks/queries/useListings';
 import { colors } from '../../theme/colors';
-import { mapAPIListingToAIAssistant } from '../../utils/mappers';
+import { mapAPIListingDetailToAIAssistant } from '../../utils/mappers';
 
 export default function ListingDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -14,7 +14,7 @@ export default function ListingDetailScreen() {
 
   console.log('[ListingDetailScreen] apiListing', apiListing);
 
-  const assistant = apiListing ? mapAPIListingToAIAssistant(apiListing) : null;
+  const assistant = apiListing ? mapAPIListingDetailToAIAssistant(apiListing) : null;
 
   const handleBack = () => {
     router.back();
@@ -82,7 +82,10 @@ export default function ListingDetailScreen() {
           </View>
 
           <Text style={styles.assistantName}>{assistant.name}</Text>
-          <Text style={styles.assistantProvider}>by {assistant.provider}</Text>
+          <View style={styles.providerContainer}>
+            {assistant.providerImage && <Image source={{ uri: assistant.providerImage }} style={styles.providerImage} />}
+            <Text style={styles.assistantProvider}>by {assistant.provider}</Text>
+          </View>
 
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
@@ -94,12 +97,21 @@ export default function ListingDetailScreen() {
               <Ionicons name="people" size={16} color={colors.purple} />
               <Text style={styles.statText}>{assistant.totalUsers != null ? assistant.totalUsers.toLocaleString() : '0'} users</Text>
             </View>
+            {assistant.lastUpdated && (
+              <>
+                <View style={styles.statDivider} />
+                <View style={styles.statItem}>
+                  <Ionicons name="time" size={16} color={colors.purple} />
+                  <Text style={styles.statText}>Updated {assistant.lastUpdated}</Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>About this Assistant</Text>
-          <Text style={styles.description}>{assistant.description}</Text>
+          <Text style={styles.description}>{assistant.longDescription || assistant.description}</Text>
         </View>
 
         <View style={styles.section}>
@@ -109,10 +121,12 @@ export default function ListingDetailScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Features</Text>
-          <Text style={styles.placeholderText}>Feature details will be available soon...</Text>
-        </View>
+        {assistant.longDescription && assistant.longDescription !== assistant.description && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Additional Information</Text>
+            <Text style={styles.description}>{assistant.description}</Text>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.actionContainer}>
@@ -239,11 +253,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   },
+  providerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  providerImage: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    marginRight: 8,
+  },
   assistantProvider: {
     fontSize: 14,
     color: colors.black,
-    textAlign: 'center',
-    marginBottom: 16,
   },
   statsContainer: {
     flexDirection: 'row',

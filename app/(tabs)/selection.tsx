@@ -1,185 +1,248 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { AIAssistantCard } from '../../components/Marketplace/AIAssistantCard';
+import { Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors } from '../../theme/colors';
 import type { AIAssistant } from '../../types';
 
-const BASE_URL = 'https://klonit-testing-backend.oielpj.easypanel.host';
+type SelectionScreenProps = {
+  assistant: AIAssistant;
+  onBack: () => void;
+};
 
-export default function MarketplaceScreen() {
-  const [assistants, setAssistants] = useState<AIAssistant[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showCategories, setShowCategories] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch assistants
-  useEffect(() => {
-    const fetchListings = async () => {
-      try {
-        const url = new URL(`${BASE_URL}/marketplace/listings`);
-        url.searchParams.append('page', '1');
-        url.searchParams.append('per_page', '20');
-        if (selectedCategory !== 'all') {
-          url.searchParams.append('category', selectedCategory);
-        }
-        if (searchQuery) {
-          url.searchParams.append('search', searchQuery);
-        }
-
-        const res = await fetch(url.toString());
-        const json = await res.json();
-        if (json.success) {
-          setAssistants(json.data);
-        }
-      } catch (error) {
-        console.error('Error fetching listings:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchListings();
-  }, [searchQuery, selectedCategory]);
-
-  // Fetch categories once
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${BASE_URL}/marketplace/categories`);
-        const json = await res.json();
-        if (json.success) {
-          setCategories(['all', ...json.data]);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      }
-    };
-
-    fetchCategories();
-  }, []);
-
-  const handleAssistantPress = useCallback((assistant: AIAssistant) => {
-    // TODO: Navigate to assistant detail screen
-    console.log('Pressed:', assistant.name);
-  }, []);
-
-  const renderAssistant = ({ item }: { item: AIAssistant }) => (
-    <AIAssistantCard assistant={item} onPress={() => handleAssistantPress(item)} />
-  );
-
-  const renderCategory = (category: string) => (
-    <TouchableOpacity
-      key={category}
-      style={[styles.categoryItem, selectedCategory === category && styles.selectedCategoryItem]}
-      onPress={() => setSelectedCategory(category)}
-    >
-      <Text style={[styles.categoryText, selectedCategory === category && styles.selectedCategoryText]}>
-        {category.charAt(0).toUpperCase() + category.slice(1)}
-      </Text>
-    </TouchableOpacity>
-  );
-
+export default function SelectionScreen({ assistant, onBack }: SelectionScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>AI Marketplace</Text>
-      </View>
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Header with back button */}
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={onBack}>
+            <Ionicons name="chevron-back" size={24} color={colors.black} />
+            <Text style={styles.backText}>Back to Marketplace</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Ionicons name="search-outline" size={20} color={colors.black} style={styles.searchIcon} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search for AI assistants ..."
-            placeholderTextColor={colors.black}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+        {/* Profile Section */}
+        <View style={styles.profileSection}>
+          <View style={styles.profileImageContainer}>
+          {assistant.avatar ? (
+          <Image 
+            source={{ uri: assistant.avatar }}
+            style={styles.profileImage}
           />
-        </View>
-      </View>
-
-      {/* Category Filter */}
-      <TouchableOpacity style={styles.categoriesToggle} onPress={() => setShowCategories(!showCategories)}>
-        <Ionicons name="filter" size={20} color={colors.purple} style={styles.filterIcon} />
-        <Text style={styles.categoriesTitle}>Categories</Text>
-        <Ionicons name={showCategories ? 'chevron-up' : 'chevron-down'} size={20} color={colors.purple} />
-      </TouchableOpacity>
-
-      {showCategories && (
-        <ScrollView style={styles.categoriesContainer} horizontal showsHorizontalScrollIndicator={false}>
-          {categories.map(renderCategory)}
-        </ScrollView>
-      )}
-
-      {/* Assistants List */}
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.purple} />
-        </View>
-      ) : (
-        <FlatList
-          data={assistants}
-          renderItem={renderAssistant}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={48} color={colors.black} />
-              <Text style={styles.emptyTitle}>No assistants found</Text>
-              <Text style={styles.emptySubtitle}>Try adjusting your search or category filter</Text>
+        ) : (
+          <View style={[styles.profileImage, styles.defaultAvatar]}>
+            <Ionicons name="person" size={40} color={colors.black} />
+          </View>
+        )}
+          </View>
+          
+          <View style={styles.profileInfo}>
+            <Text style={styles.assistantName}>{assistant.name}</Text>
+            <Text style={styles.creatorName}>by {assistant.creator || 'AI Creator'}</Text>
+            
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Ionicons name="star" size={16} color="#FFD700" />
+                <Text style={styles.statText}>{assistant.rating || '4.5'}</Text>
+              </View>
+              
+              <View style={styles.statItem}>
+                <Ionicons name="people" size={16} color={colors.black} />
+                <Text style={styles.statText}>{assistant.subscribers || '2063'} Subscribers</Text>
+              </View>
             </View>
-          }
-        />
-      )}
+          </View>
+        </View>
+
+        {/* About Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About this AI Assistant</Text>
+          <Text style={styles.description}>{assistant.description}</Text>
+        </View>
+
+        {/* Technologies and Services Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>TECHNOLOGIES AND SERVICES</Text>
+          <Text style={styles.description}>
+            {assistant.services || `${assistant.name} offers a wide range of services and capabilities. Our advanced AI technology provides comprehensive solutions tailored to your specific needs and requirements.`}
+          </Text>
+          
+          {assistant.detailedDescription && (
+            <Text style={styles.description}>
+              {assistant.detailedDescription}
+            </Text>
+          )}
+        </View>
+
+        {/* Live Demo Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.liveDemoButton}>
+            <Ionicons name="play-circle" size={20} color={colors.white} />
+            <Text style={styles.liveDemoText}>Live Demo</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Bottom padding for tab bar */}
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* Bottom Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="home-outline" size={24} color={colors.black} />
+          <Text style={styles.tabText}>Home</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="grid-outline" size={24} color={colors.black} />
+          <Text style={styles.tabText}>Marketplace</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="heart-outline" size={24} color={colors.black} />
+          <Text style={styles.tabText}>Favorites</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={styles.tabItem}>
+          <Ionicons name="person-outline" size={24} color={colors.black} />
+          <Text style={styles.tabText}>Profile</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
   header: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grayLight,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
-  title: { fontSize: 24, fontWeight: '700', color: colors.purple },
-  searchContainer: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: colors.white },
-  searchInputContainer: {
+  backButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.grayLight,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
   },
-  searchIcon: { marginRight: 8 },
-  searchInput: { flex: 1, fontSize: 16, color: colors.black },
-  categoriesToggle: {
+  backText: {
+    marginLeft: 4,
+    color: colors.black,
+    fontSize: 16,
+  },
+  profileSection: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.white,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.grayLight,
+    paddingBottom: 24,
+    alignItems: 'flex-start',
   },
-  filterIcon: { marginRight: 8 },
-  categoriesTitle: { flex: 1, fontSize: 16, fontWeight: '600', color: colors.black },
-  categoriesContainer: { backgroundColor: colors.white, maxHeight: 60, borderBottomWidth: 1, borderBottomColor: colors.grayLight },
-  categoryItem: { paddingHorizontal: 16, paddingVertical: 8, marginHorizontal: 4, borderRadius: 20, backgroundColor: colors.grayLight },
-  selectedCategoryItem: { backgroundColor: colors.purple },
-  categoryText: { fontSize: 14, color: colors.black },
-  selectedCategoryText: { color: colors.white, fontWeight: '600' },
-  listContainer: { paddingVertical: 8 },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 64, paddingHorizontal: 32 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: colors.black, marginTop: 16, marginBottom: 8 },
-  emptySubtitle: { fontSize: 14, color: colors.black, textAlign: 'center', lineHeight: 20 },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  profileImageContainer: {
+    marginRight: 16,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: colors.grayLight,
+  },
+  defaultAvatar: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  assistantName: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.black,
+    marginBottom: 4,
+  },
+  creatorName: {
+    fontSize: 16,
+    color: colors.black,
+    marginBottom: 12,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  statText: {
+    fontSize: 14,
+    color: colors.black,
+    marginLeft: 4,
+  },
+  section: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.black,
+    marginBottom: 12,
+  },
+  description: {
+    fontSize: 16,
+    color: colors.black,
+    lineHeight: 24,
+    marginBottom: 16,
+  },
+  buttonContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  liveDemoButton: {
+    backgroundColor: colors.purple,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  liveDemoText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  bottomPadding: {
+    height: 100, // Space for tab bar
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.grayLight,
+    paddingBottom: 34, // Safe area for home indicator
+    paddingTop: 8,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  tabText: {
+    fontSize: 12,
+    color: colors.black,
+    marginTop: 4,
+  },
 });
+
+// Update your colors object to include these if not already present:
+// colors = {
+//   ...colors,
+//   white: '#FFFFFF',
+//   black: '#000000',
+//   grayLight: '#F0F0F0',
+//   purple: '#6B46C1',
+//   background: '#F8F8F8',
+// };

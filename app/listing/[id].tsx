@@ -21,8 +21,12 @@ export default function ListingDetailScreen() {
   };
 
   const handleTryAssistant = () => {
-    // TODO: Navigate to chat screen or implement chat functionality
-    console.log('Try assistant:', assistant?.name);
+    if (assistant?.id) {
+      router.push({
+        pathname: '/chat/[id]',
+        params: { id: assistant.id },
+      });
+    }
   };
 
   if (isLoading) {

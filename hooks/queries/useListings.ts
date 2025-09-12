@@ -53,10 +53,11 @@ export const useListings = ({ category = 'all', search = '', perPage = 9, enable
   // Flatten all pages into a single array of listings
   const flatListings = useMemo(() => {
     if (!query.data?.pages) return [];
-
-    return query.data.pages.reduce<APIListingItem[]>((acc, page) => {
-      return [...acc, ...page.data];
-    }, []);
+    const result: APIListingItem[] = [];
+    for (const page of query.data.pages) {
+      result.push(...page.data);
+    }
+    return result;
   }, [query.data?.pages]);
 
   // Get pagination info from the last page
@@ -109,12 +110,12 @@ export const useListingDetail = (listingId: number | null, enabled = true) => {
       console.log('[useListingDetail] Request →', { listingId });
       const response = await marketplaceApi.getListingDetails(listingId, signal);
       console.log('[useListingDetail] Response ←', {
-        success: (response as any)?.success,
-        hasData: Boolean(response?.data),
-        dataSample: response?.data
+        success: response.success,
+        hasData: Boolean(response.data),
+        dataSample: response.data
           ? {
-              id: (response.data as any)?.id,
-              title: (response.data as any)?.title,
+              id: response.data.id,
+              title: response.data.title,
             }
           : null,
       });
@@ -127,11 +128,6 @@ export const useListingDetail = (listingId: number | null, enabled = true) => {
       if (isAbortError(error)) return false;
       return failureCount < 2;
     },
-    onError: (err) => {
-      console.log('[useListingDetail] Error ✖', err);
-    },
-    onSuccess: (data) => {
-      console.log('[useListingDetail] onSuccess ✓', { id: (data as any)?.id, title: (data as any)?.title });
-    },
+    // keep options minimal to satisfy typings; logs above are sufficient
   });
 };

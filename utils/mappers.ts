@@ -42,6 +42,7 @@ export const mapAPIListingToAIAssistant = (apiListing: APIListingItem): AIAssist
     lastUpdated,
     brandName,
     brandSubtitle,
+    chatbotId: (apiListing as any).chatbot_id || undefined,
   };
 };
 
@@ -85,6 +86,7 @@ export const mapAPIListingDetailToAIAssistant = (apiListingDetail: APIListingDet
     lastUpdated,
     brandName,
     brandSubtitle,
+    chatbotId: (listing as any).chatbot_id || undefined,
   };
 };
 

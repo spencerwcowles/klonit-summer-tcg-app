@@ -12,6 +12,7 @@ export interface AIAssistant {
   lastUpdated?: string;
   brandName?: string;
   brandSubtitle?: string;
+  chatbotId?: string;
 }
 
 export interface Category {

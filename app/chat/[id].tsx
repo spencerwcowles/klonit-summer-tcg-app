@@ -1,10 +1,22 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { FlatList, KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { useListingDetail } from '../../hooks/queries/useListings';
-import { colors } from '../../theme/colors';
-import { mapAPIListingDetailToAIAssistant } from '../../utils/mappers';
+// app/chat/[id].tsx
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useListingDetail } from "../../hooks/queries/useListings";
+import { colors } from "../../theme/colors";
+import { mapAPIListingDetailToAIAssistant } from "../../utils/mappers";
+import { postPrompt } from "../../services/chatApi";
 
 interface Message {
   id: string;
@@ -29,65 +41,104 @@ export default function ChatScreen() {
   const assistant = apiListing ? mapAPIListingDetailToAIAssistant(apiListing) : null;
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
+  const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
 
-  const handleBack = () => {
-    router.back();
-  };
+  // Helper to make a stable 16-char session id
+  const makeSessionId = (seed = "") =>
+    (seed + Math.random().toString(36).slice(2) + Date.now().toString(36))
+      .replace(/[^a-z0-9]/gi, "")
+      .slice(0, 16);
+
+  // Prefer mapper field; fall back to raw nested API shapes if needed
+  const chatbotId: string | null =
+    assistant?.chatbotId ??
+    (apiListing as any)?.listing?.chatbot_id ??
+    (apiListing as any)?.chatbot_id ??
+    null;
+
+  // Create session id only after chatbotId is known
+  const sessionIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (chatbotId && !sessionIdRef.current) {
+      sessionIdRef.current = makeSessionId(chatbotId);
+    }
+  }, [chatbotId]);
+
+  const handleBack = () => router.back();
 
   const handleSendMessage = useCallback(async () => {
-    if (!inputText.trim()) return;
+    const trimmed = inputText.trim();
+    if (!trimmed || !chatbotId || !sessionIdRef.current) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputText.trim(),
+      text: trimmed,
       isUser: true,
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInputText('');
+    setInputText("");
     setIsLoading(true);
 
-    // Simulate mock search results and assistant response
-    setTimeout(() => {
-      // Mock search results
-      const mockSearchResults: SearchResult[] = [
-        {
-          id: '1',
-          title: 'Example Search Result 1',
-          snippet: 'This is a mock search result snippet that provides relevant information...',
-          url: 'https://example.com',
-        },
-        {
-          id: '2',
-          title: 'Example Search Result 2',
-          snippet: 'Another mock search result with helpful context and information...',
-          url: 'https://example2.com',
-        },
-      ];
+    try {
+      const res = await postPrompt({
+        prompt: userMessage.text,
+        chatbotId,
+        sessionType: sessionIdRef.current,
+      });
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: `Hello! I'm ${assistant?.name || 'your AI assistant'}. I found some relevant information about "${userMessage.text}". Based on the search results above, here's what I can tell you...`,
+        text: res.bot_reply ?? "Sorry, I could not generate a response.",
         isUser: false,
         timestamp: new Date(),
       };
 
-      setSearchResults(mockSearchResults);
-      setShowSearchResults(true);
+      // Hide search UI for now
+      setShowSearchResults(false);
+      setSearchResults([]);
+
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (err: any) {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `Error: ${err?.message ?? "Failed to reach chatbot."}`,
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
-  }, [inputText, assistant?.name]);
+    }
+  }, [inputText, chatbotId]);
+
+  const canSend = Boolean(chatbotId) && !!inputText.trim() && !isLoading;
 
   const renderMessage = ({ item }: { item: Message }) => (
-    <View style={[styles.messageContainer, item.isUser ? styles.userMessage : styles.assistantMessage]}>
-      <View style={[styles.messageBubble, item.isUser ? styles.userBubble : styles.assistantBubble]}>
-        <Text style={[styles.messageText, item.isUser ? styles.userText : styles.assistantText]}>{item.text}</Text>
+    <View
+      style={[
+        styles.messageContainer,
+        item.isUser ? styles.userMessage : styles.assistantMessage,
+      ]}
+    >
+      <View
+        style={[
+          styles.messageBubble,
+          item.isUser ? styles.userBubble : styles.assistantBubble,
+        ]}
+      >
+        <Text
+          style={[
+            styles.messageText,
+            item.isUser ? styles.userText : styles.assistantText,
+          ]}
+        >
+          {item.text}
+        </Text>
       </View>
     </View>
   );
@@ -107,17 +158,31 @@ export default function ChatScreen() {
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Ionicons name="arrow-back" size={24} color={colors.purple} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{assistant?.name || 'AI Assistant Chat'}</Text>
+        <Text style={styles.headerTitle}>{assistant?.name || "AI Assistant Chat"}</Text>
         <View style={styles.headerRight} />
       </View>
 
-      {/* Google Search Results Section */}
+      {/* Optional: small banner while listing loads or if chatbotId missing */}
+      {!chatbotId && (
+        <Text style={{ textAlign: "center", padding: 8, color: colors.grayMedium }}>
+          Loading assistant…
+        </Text>
+      )}
+
+      {/* Google Search Results Section (collapsed/hidden for now) */}
       {showSearchResults && (
         <View style={styles.searchSection}>
-          <TouchableOpacity style={styles.searchHeader} onPress={() => setShowSearchResults(!showSearchResults)}>
+          <TouchableOpacity
+            style={styles.searchHeader}
+            onPress={() => setShowSearchResults(!showSearchResults)}
+          >
             <Ionicons name="search-outline" size={20} color={colors.purple} />
             <Text style={styles.searchHeaderText}>Search Results</Text>
-            <Ionicons name={showSearchResults ? 'chevron-up' : 'chevron-down'} size={20} color={colors.purple} />
+            <Ionicons
+              name={showSearchResults ? "chevron-up" : "chevron-down"}
+              size={20}
+              color={colors.purple}
+            />
           </TouchableOpacity>
 
           {showSearchResults && (
@@ -133,7 +198,10 @@ export default function ChatScreen() {
         </View>
       )}
 
-      <KeyboardAvoidingView style={styles.chatContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView
+        style={styles.chatContainer}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
         {/* Messages List */}
         <FlatList
           data={messages}
@@ -146,7 +214,9 @@ export default function ChatScreen() {
             <View style={styles.emptyContainer}>
               <Ionicons name="chatbubble-outline" size={48} color={colors.grayMedium} />
               <Text style={styles.emptyTitle}>Start a conversation</Text>
-              <Text style={styles.emptySubtitle}>Ask me anything and I'll help you with search results!</Text>
+              <Text style={styles.emptySubtitle}>
+                Ask me anything and I'll help you with search results!
+              </Text>
             </View>
           }
         />
@@ -162,7 +232,7 @@ export default function ChatScreen() {
 
         {/* Input Section */}
         <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
+          <View className="inputWrapper" style={styles.inputWrapper}>
             <TextInput
               style={styles.textInput}
               value={inputText}
@@ -173,11 +243,18 @@ export default function ChatScreen() {
               maxLength={500}
             />
             <TouchableOpacity
-              style={[styles.sendButton, inputText.trim() ? styles.sendButtonActive : styles.sendButtonInactive]}
+              style={[
+                styles.sendButton,
+                canSend ? styles.sendButtonActive : styles.sendButtonInactive,
+              ]}
               onPress={handleSendMessage}
-              disabled={!inputText.trim() || isLoading}
+              disabled={!canSend}
             >
-              <Ionicons name="send" size={20} color={inputText.trim() ? colors.white : colors.grayMedium} />
+              <Ionicons
+                name="send"
+                size={20}
+                color={canSend ? colors.white : colors.grayMedium}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -192,8 +269,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: colors.white,
@@ -207,9 +284,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     flex: 1,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.black,
-    textAlign: 'center',
+    textAlign: "center",
   },
   headerRight: {
     width: 40,
@@ -220,15 +297,15 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.grayLight,
   },
   searchHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
   searchHeaderText: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.black,
     marginLeft: 8,
   },
@@ -247,7 +324,7 @@ const styles = StyleSheet.create({
   },
   searchResultTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.purple,
     marginBottom: 4,
   },
@@ -272,14 +349,14 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 64,
     paddingHorizontal: 32,
   },
   emptyTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.black,
     marginTop: 16,
     marginBottom: 8,
@@ -287,7 +364,7 @@ const styles = StyleSheet.create({
   emptySubtitle: {
     fontSize: 14,
     color: colors.grayMedium,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 20,
   },
   messageContainer: {
@@ -295,13 +372,13 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   userMessage: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   assistantMessage: {
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: "80%",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 18,
@@ -327,7 +404,7 @@ const styles = StyleSheet.create({
   loadingContainer: {
     paddingHorizontal: 16,
     marginVertical: 4,
-    alignItems: 'flex-start',
+    alignItems: "flex-start",
   },
   loadingBubble: {
     backgroundColor: colors.grayLight,
@@ -338,7 +415,7 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     color: colors.grayMedium,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   inputContainer: {
     backgroundColor: colors.white,
@@ -348,8 +425,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     backgroundColor: colors.background,
     borderRadius: 24,
     paddingHorizontal: 16,
@@ -369,8 +446,8 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     width: 40,
     height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   sendButtonActive: {
     backgroundColor: colors.purple,

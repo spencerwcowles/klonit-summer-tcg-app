@@ -1,59 +1,28 @@
-// services/chatApi.ts
-const BASE_URL = "https://klonit-testing-klonit.oielpj.easypanel.host";
+import { promptClient } from '../lib/api';
 
-type GetPromptOK = {
-  message: string;
-  transcript: string;
-  bot_reply: string;
-  ans_voice?: string;
-  chat_id: string;
+export type PromptRequest = {
+  prompt: string;
+  voice_type: 'FEMALE' | 'MALE';
+  chatbot_id: string;          // UUID required by Prompt API
+  lang_type?: 'en';
+  session_type?: string;
+  timezone?: string;           // IANA TZ
 };
 
-export async function postPrompt({
-  prompt,
-  chatbotId,
-  sessionType,
-  lang = "en",
-  voiceType = "female",
-}: {
-  prompt: string;
-  chatbotId: string | number;
-  sessionType: string;
-  lang?: string;
-  voiceType?: "male" | "female";
-}) {
-  const payload = {
-    prompt: String(prompt),
-    voice_type: String(voiceType),
-    chatbot_id: String(chatbotId),
-    lang_type: String(lang),
-    session_type: String(sessionType),
+export type PromptResponse = {
+  message: string;             // "successfully"
+  transcript: string;
+  bot_reply: string;
+  ans_voice?: string;          // base64 WAV (optional)
+};
+
+export async function getPrompt(req: PromptRequest): Promise<PromptResponse> {
+  // supply sensible defaults; backend accepts these
+  const body = {
+    lang_type: 'en',
+    session_type: req.session_type ?? '1234567891234567',
+    timezone: req.timezone ?? 'America/New_York',
+    ...req,
   };
-
-  console.log("[get-prompt] POST json", payload);
-
-  const res = await fetch(`${BASE_URL}/get-prompt`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  const raw = await res.text().catch(() => "");
-  console.log("[get-prompt] status", res.status);
-  console.log("[get-prompt] raw", raw);
-
-  if (!res.ok) {
-    let detail = raw;
-    try {
-      const j = JSON.parse(raw);
-      detail = j?.message || j?.error || raw;
-    } catch {}
-    throw new Error(`get-prompt failed: ${res.status} — ${detail}`);
-  }
-
-  try {
-    return JSON.parse(raw) as GetPromptOK;
-  } catch {
-    throw new Error("get-prompt returned non-JSON body");
-  }
+  return await promptClient.post<PromptResponse>('/get-prompt', body);
 }

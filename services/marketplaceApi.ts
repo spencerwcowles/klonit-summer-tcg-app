@@ -1,4 +1,4 @@
-import { apiClient } from '../lib/api';
+import { marketplaceClient } from '../lib/api';
 import type { APICategoriesResponse, APIListingDetailResponse, APIListingsResponse, ListingsQueryParams } from '../types/api';
 
 // Marketplace API service functions with AbortController support
@@ -17,21 +17,21 @@ export const marketplaceApi = {
 
     const url = `/marketplace/listings${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
 
-    return apiClient.get<APIListingsResponse>(url, { signal });
+    return marketplaceClient.get<APIListingsResponse>(url, { signal });
   },
 
   /**
    * Fetch details for a specific listing
    */
   async getListingDetails(listingId: number, signal?: AbortSignal): Promise<APIListingDetailResponse> {
-    return apiClient.get<APIListingDetailResponse>(`/marketplace/listings/${listingId}`, { signal });
+    return marketplaceClient.get<APIListingDetailResponse>(`/marketplace/listings/${listingId}`, { signal });
   },
 
   /**
    * Fetch all available categories
    */
   async getCategories(signal?: AbortSignal): Promise<APICategoriesResponse> {
-    return apiClient.get<APICategoriesResponse>('/marketplace/categories', { signal });
+    return marketplaceClient.get<APICategoriesResponse>('/marketplace/categories', { signal });
   },
 };
 

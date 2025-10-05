@@ -24,5 +24,8 @@ export async function getPrompt(req: PromptRequest): Promise<PromptResponse> {
     timezone: req.timezone ?? 'America/New_York',
     ...req,
   };
-  return await promptClient.post<PromptResponse>('/get-prompt', body);
+  
+  const { data }  = await promptClient.post<PromptResponse>('/get-prompt', body);
+  return data;
+
 }

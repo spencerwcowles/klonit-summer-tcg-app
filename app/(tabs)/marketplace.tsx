@@ -47,6 +47,7 @@ export default function MarketplaceScreen() {
     });
   }, []);
 
+  
   const renderAssistant = ({ item }: { item: AIAssistant }) => (
     <AIAssistantCard assistant={item} onPress={() => handleAssistantPress(item)} />
   );
